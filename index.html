@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>ระบบบันทึกอาหารกลางวัน ตาดีกา</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -202,6 +202,14 @@
 const API_URL='https://script.google.com/macros/s/AKfycbz-yGwxJ7FAO2PUCxrlVdIQE_IEiwDvKo8Zy8MVfRvjwrVPdkw3IlCLOA7XtIB9_y5xdw/exec';
 const HOME_URL='https://tadika-app.github.io/home';
 const IMG='https://lh3.googleusercontent.com/d/';
+// ลองลิงก์รูปตามลำดับ ถ้าลิงก์แรกโหลดไม่ได้จะสลับไปลิงก์สำรองอัตโนมัติ
+const imgList=id=>[IMG+id,'https://drive.google.com/thumbnail?id='+id+'&sz=w1200','https://drive.google.com/uc?export=view&id='+id];
+const NOIMG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120"><rect width="100%" height="100%" fill="#e2e8f0"/><text x="50%" y="50%" fill="#64748b" font-size="14" text-anchor="middle" font-family="sans-serif">โหลดรูปไม่ได้</text></svg>');
+function imgErr(el){
+  const l=imgList(el.dataset.id),n=(+el.dataset.n||0)+1;
+  if(n<l.length){el.dataset.n=n;el.src=l[n]}else{el.onerror=null;el.src=NOIMG}
+}
+const imgTag=(id,cls)=>`<img src="${IMG+id}" data-id="${id}" referrerpolicy="no-referrer" loading="lazy" class="${cls}" onerror="imgErr(this)">`;
 
 const TH_M=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const TH_S=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -420,7 +428,7 @@ async function loadDash(){
   $('#list').innerHTML=MEALS.length?MEALS.map(card).join(''):'<div class="card sm:col-span-2 text-center text-slate-500"><i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>ยังไม่มีการบันทึกในเดือนนี้ — กดเมนู “บันทึกอาหาร” เพื่อเริ่มต้น</div>';
 }
 function card(m){
-  const img=m.images[0]?`<img src="${IMG+m.images[0]}" loading="lazy" class="w-full max-h-56 object-cover rounded-lg bg-slate-100 mt-2" onerror="this.style.display='none'">`:'';
+  const img=m.images[0]?imgTag(m.images[0],'w-full max-h-56 object-cover rounded-lg bg-slate-100 mt-2'):'';
   return `<div class="card !p-4"><div class="flex justify-between items-start gap-2">
     <div class="font-semibold text-pine-700"><i class="fa-regular fa-calendar-check mr-1"></i>วัน${TH_D[dowOf(m.date)]}ที่ ${fmtShort(m.date)}</div>
     <div class="flex gap-3 text-sm shrink-0">
@@ -484,7 +492,8 @@ async function pickFile(inp){
 function renderPrev(){
   const src=CUR.file?CUR.file.data:(CUR.existing?IMG+CUR.existing:'');
   $('#a_pickTxt').textContent=src?'เปลี่ยนรูปภาพ':'เลือกรูปภาพ / ถ่ายรูป';
-  $('#a_prev').innerHTML=src?`<div class="relative inline-block w-full"><img src="${src}" class="w-full max-h-64 object-cover rounded-lg bg-slate-100">
+  const tag=CUR.file?`<img src="${src}" class="w-full max-h-64 object-cover rounded-lg bg-slate-100">`:(CUR.existing?imgTag(CUR.existing,'w-full max-h-64 object-cover rounded-lg bg-slate-100'):'');
+  $('#a_prev').innerHTML=src?`<div class="relative inline-block w-full">${tag}
     <button class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8" title="ลบรูป" onclick="CUR={file:null,existing:null};renderPrev()"><i class="fa-solid fa-xmark"></i></button>
     ${CUR.file&&CUR.existing?'<div class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> รูปเดิมจะถูกลบเมื่อบันทึก</div>':''}</div>`:'';
 }
@@ -543,13 +552,13 @@ function printReport(){
   const fy=USER.fiscalYear||(mo>=9?be+1:be);
   const rows=MEALS.map(m=>{
     const [yy,mm,dd]=m.date.split('-').map(Number);
-    const imgs=m.images.map(id=>`<img src="${IMG+id}" class="s">`).join('');
+    const imgs=m.images.map(id=>`<img src="${IMG+id}" data-id="${id}" referrerpolicy="no-referrer" class="s">`).join('');
     return `<tr><td class="c">${thN(dd)} ${TH_S[mm-1]} ${thN(yy+543)}</td>
       <td>${m.menu.split('\n').filter(Boolean).map(l=>'-'+esc(l)).join('<br>')}</td>
       <td class="c">${imgs}</td><td>${esc(m.note)}</td></tr>`;
   }).join('');
   const dots=(n)=>'.'.repeat(n);
-  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>รายงานอาหารกลางวัน ${TH_M[mo-1]} ${be}</title>
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>รายงานอาหารกลางวัน ${TH_M[mo-1]} ${be}</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
   @page{size:A4 portrait;margin:14mm 12mm}
@@ -579,7 +588,13 @@ function printReport(){
     var im=[].slice.call(document.images),n=im.length,d=0;
     function f(){if(++d>=n)setTimeout(function(){window.print()},400)}
     if(!n)return f();
-    im.forEach(function(i){if(i.complete)f();else{i.onload=f;i.onerror=f}});
+    var L=function(id){return ['https://lh3.googleusercontent.com/d/'+id,'https://drive.google.com/thumbnail?id='+id+'&sz=w1200','https://drive.google.com/uc?export=view&id='+id]};
+    im.forEach(function(i){
+      var k=0;
+      i.onload=f;
+      i.onerror=function(){var l=L(i.getAttribute('data-id'));if(++k<l.length)i.src=l[k];else f()};
+      if(i.complete){if(i.naturalWidth)f();else i.onerror()}
+    });
   };
   <\/script></body></html>`;
   const w=window.open('','_blank');
