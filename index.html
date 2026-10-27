@@ -170,7 +170,9 @@
         <label class="lbl"><i class="fa-regular fa-calendar-days mr-1 text-pine-500"></i>วัน/เดือน/ปี (เลือกได้เฉพาะวันเสาร์-อาทิตย์ แสดงเป็นปี พ.ศ.)</label>
         <select id="a_date" class="inp mb-3"></select>
         <label class="lbl"><i class="fa-solid fa-bowl-food mr-1 text-pine-500"></i>รายการอาหาร (พิมพ์บรรทัดละ 1 รายการ)</label>
-        <textarea id="a_menu" rows="4" class="inp mb-3" placeholder="ข้าวสวย&#10;ไข่เจียว+ซอสมะเขือเทศ&#10;ส้ม+แตงกวา"></textarea>
+        <textarea id="a_menu" rows="4" class="inp mb-3" placeholder="ข้าวสวย
+ไข่เจียว+ซอสมะเขือเทศ
+ส้ม+แตงกวา"></textarea>
         <label class="lbl"><i class="fa-regular fa-comment-dots mr-1 text-pine-500"></i>หมายเหตุ (ถ้ามี)</label>
         <input id="a_note" class="inp mb-3">
         <label class="lbl"><i class="fa-solid fa-image mr-1 text-pine-500"></i>รูปถ่าย (1 รูป)</label>
@@ -233,7 +235,7 @@ const TH_S=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ
 const TH_D=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 const $=s=>document.querySelector(s);
 const thN=s=>String(s).replace(/\d/g,d=>'๐๑๒๓๔๕๖๗๘๙'[d]);
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":''n'}[c]));
 let TOKEN=null, USER=null, MEALS=[], OTP_EMAIL='', RESET_TOKEN='', fTimer=null, lastChk='';
 let EDIT_ID=null, CUR={file:null,existing:null}; // CUR = รูปที่เลือกใหม่ / รูปเดิมที่มีอยู่
 
@@ -615,6 +617,12 @@ function printReport(){
   img.s{width:100%;max-height:62mm;object-fit:contain}
   .sig{display:flex;justify-content:space-between;margin-top:22px;break-inside:avoid;font-size:13pt}
   .sig div{width:48%;text-align:center}.pb{margin-top:14px;break-inside:avoid}
+  .print-promo{margin-top:20px;break-inside:avoid;page-break-inside:avoid;border-top:1px dashed #666;padding-top:12px;text-align:center}
+  .promo-box{display:inline-flex;align-items:center;gap:12px;border:1px dashed #176452;padding:6px 14px;border-radius:8px;background:#fafcfb}
+  .promo-qr{position:relative;width:75px;height:75px;display:inline-block}
+  .promo-qr img{width:75px;height:75px;display:block}
+  .promo-logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:#fff;padding:2px;border-radius:3px;object-fit:contain}
+  .promo-text{text-align:left;font-size:11pt;line-height:1.35}
   </style></head><body>
   <p class="t">แบบสรุปรายงานผลการจัดการอาหารกลางวันของผู้เรียนศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา)</p>
   <p class="t">ประจำปีงบประมาณ พ.ศ. ${thN(fy)} ประจำเดือน${TH_M[mo-1]} ${thN(be)}</p>
@@ -626,6 +634,18 @@ function printReport(){
   <div class="sig">
     <div>ลงชื่อ ${dots(32)} ผู้จัดทำข้อมูล<br>(${USER.preparer?esc(USER.preparer):dots(40)})<br>ตำแหน่ง ${USER.preparerPos?esc(USER.preparerPos):dots(30)}</div>
     <div>ลงชื่อ ${dots(32)} ผู้รับรองข้อมูล<br>(${USER.approver?esc(USER.approver):dots(40)})<br>ตำแหน่ง ประธานศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)}</div>
+  </div>
+  <div class="print-promo">
+    <div class="promo-box">
+      <div class="promo-qr">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tadika-app.github.io/home" alt="QR Code">
+        <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="promo-logo" alt="Logo">
+      </div>
+      <div class="promo-text">
+        <b>สนับสนุนระบบบริหารจัดการตาดีกาฟรี!</b><br>
+        สแกน QR Code เพื่อใช้งานระบบบันทึกอาหารกลางวัน<br>และเครื่องมืออื่นๆ สำหรับศูนย์ตาดีกาได้ฟรี ไม่มีค่าใช้จ่าย
+      </div>
+    </div>
   </div>
   <script>
   window.onload=function(){
