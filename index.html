@@ -18,8 +18,9 @@
   .btn2{@apply rounded-xl px-4 py-2.5 font-semibold text-pine-700 bg-pine-100 hover:bg-pine-100/70 active:scale-95 transition}
   .card{@apply bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6}
   .lbl{@apply block text-sm font-medium text-slate-600 mb-1}
-  .nav{@apply px-3 py-2 rounded-lg text-sm font-medium text-pine-100 hover:bg-white/10 whitespace-nowrap}
-  .nav.on{@apply bg-white text-pine-700}
+  .menuItem{@apply w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-pine-50 text-left transition}
+  .menuItem.on{@apply bg-pine-100 text-pine-700}
+  .menuBtn{@apply flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 active:scale-95 transition}
 </style>
 </head>
 <body>
@@ -111,20 +112,36 @@
 <!-- ===== ส่วนหลังเข้าสู่ระบบ ===== -->
 <div id="app" class="hidden min-h-screen flex flex-col">
   <header class="bg-pine-700 text-white sticky top-0 z-40 shadow">
-    <div class="max-w-5xl mx-auto px-3 pt-3 pb-2 flex items-center gap-3">
-      <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="h-10 w-10 object-contain bg-white rounded-full p-0.5" alt="">
-      <div class="min-w-0">
+    <div class="max-w-5xl mx-auto px-3 py-3 flex items-center gap-3">
+      <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="h-10 w-10 object-contain bg-white rounded-full p-0.5 shrink-0" alt="">
+      <div class="min-w-0 flex-1">
         <div class="font-semibold leading-tight truncate" id="hCenter"></div>
         <div class="text-xs text-pine-100 truncate" id="hUser"></div>
       </div>
+      <button class="menuBtn" onclick="toggleMenu()" aria-label="เมนู">
+        <i class="fa-solid fa-bars text-xl"></i>
+      </button>
     </div>
-    <nav class="max-w-5xl mx-auto px-3 pb-2 flex gap-1 overflow-x-auto">
-      <button class="nav on" data-v="vDash" onclick="go('vDash')"><i class="fa-solid fa-chart-pie mr-1"></i>แดชบอร์ด</button>
-      <button class="nav" data-v="vAdd" onclick="go('vAdd')"><i class="fa-solid fa-utensils mr-1"></i>บันทึกอาหาร</button>
-      <button class="nav" data-v="vSet" onclick="go('vSet')"><i class="fa-solid fa-gear mr-1"></i>ตั้งค่า</button>
-      <button class="nav ml-auto" onclick="logout()"><i class="fa-solid fa-right-from-bracket mr-1"></i>ออกจากระบบ</button>
-    </nav>
   </header>
+
+  <!-- ฉากหลังเมื่อเปิดเมนู -->
+  <div id="menuOverlay" class="fixed inset-0 bg-black/40 z-[45] hidden" onclick="closeMenu()"></div>
+
+  <!-- ลิ้นชักเมนู -->
+  <div id="menuDrawer" class="fixed top-0 right-0 h-full w-72 max-w-[82%] bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="bg-pine-700 text-white p-4 flex items-center justify-between shrink-0">
+      <div class="font-semibold"><i class="fa-solid fa-bars mr-1"></i> เมนู</div>
+      <button class="menuBtn" onclick="closeMenu()" aria-label="ปิดเมนู"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <nav class="flex-1 overflow-y-auto p-2 space-y-1">
+      <button class="menuItem on" data-v="vDash" onclick="go('vDash');closeMenu()"><i class="fa-solid fa-chart-pie w-5 text-center"></i> แดชบอร์ด</button>
+      <button class="menuItem" data-v="vAdd" onclick="go('vAdd');closeMenu()"><i class="fa-solid fa-utensils w-5 text-center"></i> บันทึกอาหาร</button>
+      <button class="menuItem" data-v="vSet" onclick="go('vSet');closeMenu()"><i class="fa-solid fa-gear w-5 text-center"></i> ตั้งค่า</button>
+    </nav>
+    <div class="p-2 border-t shrink-0">
+      <button class="menuItem text-red-600" onclick="logout();closeMenu()"><i class="fa-solid fa-right-from-bracket w-5 text-center"></i> ออกจากระบบ</button>
+    </div>
+  </div>
 
   <main id="main" class="max-w-5xl w-full mx-auto p-3 sm:p-5 flex-1">
 
@@ -285,6 +302,21 @@ function showTerms(){
   });
 }
 
+/* ---------- เมนูแฮมเบอร์เกอร์ (ลิ้นชัก) ---------- */
+function openMenu(){
+  $('#menuOverlay').classList.remove('hidden');
+  $('#menuDrawer').classList.remove('translate-x-full');
+  document.body.style.overflow='hidden';
+}
+function closeMenu(){
+  $('#menuOverlay').classList.add('hidden');
+  $('#menuDrawer').classList.add('translate-x-full');
+  document.body.style.overflow='';
+}
+function toggleMenu(){
+  $('#menuDrawer').classList.contains('translate-x-full')?openMenu():closeMenu();
+}
+
 /* ---------- สลับหน้า ---------- */
 function show(group,id){
   document.querySelectorAll('#'+group+' > .v').forEach(e=>e.classList.add('hidden'));
@@ -292,7 +324,7 @@ function show(group,id){
 }
 function go(id,keep){
   show('main',id);
-  document.querySelectorAll('.nav[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
+  document.querySelectorAll('.menuItem[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
   if(id==='vDash')loadDash();
   if(id==='vSet')fillSettings();
   if(id==='vAdd'&&!keep)resetForm();
