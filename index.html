@@ -1,1 +1,591 @@
 
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ระบบบันทึกอาหารกลางวัน ตาดีกา</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Sarabun','sans-serif']},colors:{pine:{50:'#eef6f3',100:'#d5e9e2',500:'#1f7a65',600:'#176452',700:'#0f4e40',900:'#0a2f27'},gold:'#c9a227'}}}}</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style type="text/tailwindcss">
+  body{font-family:'Sarabun',sans-serif;background:#f1f5f3;color:#1e2b27}
+  .swal2-popup{font-family:'Sarabun',sans-serif}
+  .inp{@apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-pine-500 disabled:bg-slate-100 disabled:text-slate-500}
+  .btn{@apply rounded-xl px-4 py-2.5 font-semibold text-white bg-pine-600 hover:bg-pine-700 active:scale-95 transition disabled:opacity-50}
+  .btn2{@apply rounded-xl px-4 py-2.5 font-semibold text-pine-700 bg-pine-100 hover:bg-pine-100/70 active:scale-95 transition}
+  .card{@apply bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6}
+  .lbl{@apply block text-sm font-medium text-slate-600 mb-1}
+  .nav{@apply px-3 py-2 rounded-lg text-sm font-medium text-pine-100 hover:bg-white/10 whitespace-nowrap}
+  .nav.on{@apply bg-white text-pine-700}
+</style>
+</head>
+<body>
+
+<!-- หลอดสถานะ -->
+<div id="bar" class="fixed top-0 inset-x-0 z-[9999] hidden bg-white shadow">
+  <div class="h-2 bg-pine-100"><div id="barFill" class="h-full bg-gradient-to-r from-pine-500 to-gold transition-all duration-300" style="width:0"></div></div>
+  <div id="barText" class="text-xs text-center py-0.5 text-pine-700"></div>
+</div>
+
+<!-- ===== ส่วนก่อนเข้าสู่ระบบ ===== -->
+<div id="auth" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-pine-900 to-pine-600">
+  <div id="authBox" class="w-full max-w-md my-auto">
+
+    <!-- เข้าสู่ระบบ -->
+    <section id="vLogin" class="v card">
+      <div class="text-center mb-5">
+        <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="h-20 w-20 object-contain mx-auto mb-2" alt="logo">
+        <h1 class="text-xl font-bold text-pine-700">ระบบบันทึกและรายงานผล<br>การจัดการอาหารกลางวัน</h1>
+        <p class="text-sm text-slate-500">ศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา)</p>
+      </div>
+      <label class="lbl"><i class="fa-solid fa-envelope w-4 text-pine-500"></i> ชื่อผู้ใช้ (อีเมล)</label>
+      <input id="l_user" type="email" class="inp mb-3" autocomplete="username">
+      <label class="lbl"><i class="fa-solid fa-lock w-4 text-pine-500"></i> รหัสผ่าน</label>
+      <input id="l_pass" type="password" class="inp mb-4" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn w-full" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket mr-1"></i> เข้าสู่ระบบ</button>
+      <div class="flex justify-between mt-4 text-sm">
+        <button class="text-pine-600 underline" onclick="goForgot()"><i class="fa-solid fa-key mr-1"></i>ลืมรหัสผ่าน</button>
+        <button class="text-pine-600 underline" onclick="show('authBox','vReg')"><i class="fa-solid fa-user-plus mr-1"></i>ลงทะเบียนใช้งาน</button>
+      </div>
+    </section>
+
+    <!-- ลงทะเบียน -->
+    <section id="vReg" class="v card hidden">
+      <h2 class="text-lg font-bold text-pine-700 mb-3"><i class="fa-solid fa-user-plus mr-1"></i> ลงทะเบียนใช้งาน</h2>
+      <div class="grid gap-3">
+        <div><label class="lbl">ชื่อ-สกุล ผู้สมัคร *</label><input id="r_name" class="inp"></div>
+        <div><label class="lbl">ตำแหน่ง *</label><input id="r_pos" class="inp" placeholder="เช่น ครูตาดีกา, เหรัญญิก"></div>
+        <div><label class="lbl">ศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) *</label><input id="r_center" class="inp" placeholder="ชื่อศูนย์ฯ"></div>
+        <div><label class="lbl">ที่ตั้งสถานศึกษา *</label><input id="r_addr" class="inp" placeholder="เลขที่ หมู่ ตำบล"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl">อำเภอ *</label><input id="r_dist" class="inp"></div>
+          <div><label class="lbl">จังหวัด *</label><input id="r_prov" class="inp"></div>
+        </div>
+        <div><label class="lbl">เบอร์โทร *</label><input id="r_phone" type="tel" class="inp"></div>
+        <div><label class="lbl">อีเมล * (ใช้เป็นชื่อผู้ใช้)</label><input id="r_email" type="email" class="inp" onchange="checkEmail()"></div>
+        <div id="pwBox" class="hidden grid gap-3">
+          <div class="text-sm text-pine-600"><i class="fa-solid fa-circle-check"></i> อีเมลนี้ใช้สมัครได้ กำหนดรหัสผ่านได้เลย</div>
+          <div><label class="lbl">รหัสผ่าน (อย่างน้อย 6 ตัว) *</label><input id="r_pw" type="password" class="inp" autocomplete="new-password"></div>
+          <div><label class="lbl">ยืนยันรหัสผ่าน *</label><input id="r_pw2" type="password" class="inp" autocomplete="new-password"></div>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button class="btn2" onclick="show('authBox','vLogin')"><i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับ</button>
+        <button class="btn flex-1" onclick="doRegister()"><i class="fa-solid fa-check mr-1"></i> สมัครใช้งาน</button>
+      </div>
+    </section>
+
+    <!-- ลืมรหัสผ่าน -->
+    <section id="vForgot" class="v card hidden">
+      <h2 class="text-lg font-bold text-pine-700 mb-3"><i class="fa-solid fa-key mr-1"></i> ลืมรหัสผ่าน</h2>
+      <div id="fs1">
+        <label class="lbl">อีเมลที่ใช้สมัคร</label>
+        <input id="f_email" type="email" class="inp mb-4">
+        <button class="btn w-full" onclick="sendOtp()"><i class="fa-solid fa-paper-plane mr-1"></i> ส่งรหัส OTP ไปที่อีเมล</button>
+      </div>
+      <div id="fs2" class="hidden">
+        <p class="text-sm text-slate-600 mb-2">กรอกรหัส 4 หลักที่ส่งไปทางอีเมล <b id="f_mail"></b> <span class="block">หมดอายุใน <b id="f_timer" class="text-pine-700">30:00</b> นาที</span></p>
+        <input id="f_otp" inputmode="numeric" maxlength="4" class="inp text-center text-2xl tracking-[.6em] mb-4" placeholder="••••">
+        <button class="btn w-full" onclick="verifyOtp()"><i class="fa-solid fa-shield-halved mr-1"></i> ยืนยันรหัส</button>
+        <button class="text-sm text-pine-600 underline mt-3" onclick="sendOtp()">ส่งรหัสอีกครั้ง</button>
+      </div>
+      <div id="fs3" class="hidden">
+        <label class="lbl">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</label>
+        <input id="f_pw" type="password" class="inp mb-3" autocomplete="new-password">
+        <label class="lbl">ยืนยันรหัสผ่านใหม่</label>
+        <input id="f_pw2" type="password" class="inp mb-4" autocomplete="new-password">
+        <button class="btn w-full" onclick="resetPw()"><i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกรหัสผ่านใหม่</button>
+      </div>
+      <button class="btn2 w-full mt-4" onclick="show('authBox','vLogin')"><i class="fa-solid fa-arrow-left mr-1"></i> กลับไปหน้าเข้าสู่ระบบ</button>
+    </section>
+  </div>
+  <footer class="w-full text-center text-xs text-pine-100 pt-6 pb-2">
+    <i class="fa-solid fa-circle-question"></i> พบปัญหาการใช้งาน / ระบบงานอื่นๆ
+    <a href="https://tadika-app.github.io/home" target="_blank" rel="noopener" class="underline font-semibold text-white">คลิกที่นี่</a>
+  </footer>
+</div>
+
+<!-- ===== ส่วนหลังเข้าสู่ระบบ ===== -->
+<div id="app" class="hidden min-h-screen flex flex-col">
+  <header class="bg-pine-700 text-white sticky top-0 z-40 shadow">
+    <div class="max-w-5xl mx-auto px-3 pt-3 pb-2 flex items-center gap-3">
+      <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="h-10 w-10 object-contain bg-white rounded-full p-0.5" alt="">
+      <div class="min-w-0">
+        <div class="font-semibold leading-tight truncate" id="hCenter"></div>
+        <div class="text-xs text-pine-100 truncate" id="hUser"></div>
+      </div>
+    </div>
+    <nav class="max-w-5xl mx-auto px-3 pb-2 flex gap-1 overflow-x-auto">
+      <button class="nav on" data-v="vDash" onclick="go('vDash')"><i class="fa-solid fa-chart-pie mr-1"></i>แดชบอร์ด</button>
+      <button class="nav" data-v="vAdd" onclick="go('vAdd')"><i class="fa-solid fa-utensils mr-1"></i>บันทึกอาหาร</button>
+      <button class="nav" data-v="vSet" onclick="go('vSet')"><i class="fa-solid fa-gear mr-1"></i>ตั้งค่า</button>
+      <button class="nav ml-auto" onclick="logout()"><i class="fa-solid fa-right-from-bracket mr-1"></i>ออกจากระบบ</button>
+    </nav>
+  </header>
+
+  <main id="main" class="max-w-5xl w-full mx-auto p-3 sm:p-5 flex-1">
+
+    <!-- แดชบอร์ด -->
+    <section id="vDash" class="v">
+      <div class="flex flex-wrap items-end gap-3 mb-4">
+        <div class="flex-1 min-w-[180px]">
+          <label class="lbl"><i class="fa-regular fa-calendar mr-1 text-pine-500"></i>เดือนที่ต้องการดู</label>
+          <select id="monthSel" class="inp" onchange="loadDash()"></select>
+        </div>
+        <button class="btn" onclick="printReport()"><i class="fa-solid fa-print mr-1"></i> พิมพ์รายงาน</button>
+      </div>
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="card !p-3 text-center"><i class="fa-solid fa-calendar-check text-pine-500"></i><div class="text-2xl font-bold text-pine-700" id="stDays">0</div><div class="text-xs text-slate-500">วันที่บันทึก</div></div>
+        <div class="card !p-3 text-center"><i class="fa-solid fa-camera text-pine-500"></i><div class="text-2xl font-bold text-pine-700" id="stImgs">0</div><div class="text-xs text-slate-500">รูปถ่าย</div></div>
+        <div class="card !p-3 text-center"><i class="fa-solid fa-clock-rotate-left text-pine-500"></i><div class="text-lg font-bold text-pine-700 leading-8" id="stLast">-</div><div class="text-xs text-slate-500">บันทึกล่าสุด</div></div>
+      </div>
+      <div id="list" class="grid gap-3 sm:grid-cols-2"></div>
+    </section>
+
+    <!-- ฟอร์มบันทึก / แก้ไข -->
+    <section id="vAdd" class="v hidden">
+      <div class="card max-w-2xl mx-auto">
+        <h2 class="text-lg font-bold text-pine-700 mb-1" id="a_title"><i class="fa-solid fa-utensils mr-1"></i> บันทึกรายการอาหารกลางวัน</h2>
+        <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-circle-info"></i> บันทึกได้เฉพาะวันเสาร์และวันอาทิตย์ · อัพโหลดรูปได้วันละ 1 รูป</p>
+        <label class="lbl"><i class="fa-regular fa-calendar-days mr-1 text-pine-500"></i>วัน/เดือน/ปี <b id="a_day" class="text-pine-600"></b></label>
+        <input id="a_date" type="date" class="inp mb-3" onchange="onDate(this)">
+        <label class="lbl"><i class="fa-solid fa-bowl-food mr-1 text-pine-500"></i>รายการอาหาร (พิมพ์บรรทัดละ 1 รายการ)</label>
+        <textarea id="a_menu" rows="4" class="inp mb-3" placeholder="ข้าวสวย&#10;ไข่เจียว+ซอสมะเขือเทศ&#10;ส้ม+แตงกวา"></textarea>
+        <label class="lbl"><i class="fa-regular fa-comment-dots mr-1 text-pine-500"></i>หมายเหตุ (ถ้ามี)</label>
+        <input id="a_note" class="inp mb-3">
+        <label class="lbl"><i class="fa-solid fa-image mr-1 text-pine-500"></i>รูปถ่าย (1 รูป)</label>
+        <input id="a_file" type="file" accept="image/*" class="hidden" onchange="pickFile(this)">
+        <button class="btn2 w-full mb-3" onclick="$('#a_file').click()"><i class="fa-solid fa-camera mr-1"></i> <span id="a_pickTxt">เลือกรูปภาพ / ถ่ายรูป</span></button>
+        <div id="a_prev" class="mb-4"></div>
+        <div class="flex gap-2">
+          <button id="a_cancel" class="btn2 hidden" onclick="resetForm();go('vDash')"><i class="fa-solid fa-xmark mr-1"></i> ยกเลิก</button>
+          <button id="a_save" class="btn flex-1" onclick="saveMeal()"><i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกข้อมูล</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">หากเปลี่ยนรูปใหม่ ระบบจะลบรูปเดิมออกอัตโนมัติ · หากบันทึกซ้ำในวันเดิมจะแทนที่รายการของวันนั้น · รูปจะถูกลบอัตโนมัติเมื่อครบ 100 วัน</p>
+      </div>
+    </section>
+
+    <!-- ตั้งค่า -->
+    <section id="vSet" class="v hidden">
+      <div class="card max-w-2xl mx-auto">
+        <h2 class="text-lg font-bold text-pine-700 mb-3"><i class="fa-solid fa-gear mr-1"></i> ตั้งค่า</h2>
+        <div class="grid gap-3">
+          <div class="font-semibold text-pine-600"><i class="fa-solid fa-signature mr-1"></i>ผู้ลงนามในรายงาน</div>
+          <div><label class="lbl">ชื่อ-สกุล ผู้จัดทำข้อมูล</label><input id="s_prep" class="inp"></div>
+          <div><label class="lbl">ตำแหน่ง ผู้จัดทำข้อมูล</label><input id="s_preppos" class="inp"></div>
+          <div><label class="lbl">ชื่อ-สกุล ผู้รับรองข้อมูล (ประธานศูนย์ฯ)</label><input id="s_appr" class="inp"></div>
+          <div><label class="lbl">ปีงบประมาณ พ.ศ. (เว้นว่าง = คำนวณอัตโนมัติ)</label><input id="s_fy" inputmode="numeric" maxlength="4" class="inp" placeholder="เช่น 2570"></div>
+          <div class="font-semibold text-pine-600 mt-2"><i class="fa-solid fa-mosque mr-1"></i>ข้อมูลศูนย์การศึกษา</div>
+          <div><label class="lbl">ชื่อศูนย์ฯ ตาดีกา</label><input id="s_center" class="inp"></div>
+          <div><label class="lbl">ที่ตั้ง</label><input id="s_addr" class="inp"></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="lbl">อำเภอ</label><input id="s_dist" class="inp"></div>
+            <div><label class="lbl">จังหวัด</label><input id="s_prov" class="inp"></div>
+          </div>
+        </div>
+        <button class="btn w-full mt-5" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk mr-1"></i> บันทึกการตั้งค่า</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-xs text-slate-500 py-4">
+    <i class="fa-solid fa-circle-question"></i> พบปัญหาการใช้งาน / ระบบงานอื่นๆ
+    <a href="https://tadika-app.github.io/home" target="_blank" rel="noopener" class="underline font-semibold text-pine-600">คลิกที่นี่</a>
+  </footer>
+</div>
+
+<script>
+/* ===== ตั้งค่า: วาง URL ของ Web App ที่ Deploy จาก Apps Script (ลงท้ายด้วย /exec) ===== */
+const API_URL='https://script.google.com/macros/s/AKfycbz-yGwxJ7FAO2PUCxrlVdIQE_IEiwDvKo8Zy8MVfRvjwrVPdkw3IlCLOA7XtIB9_y5xdw/exec';
+const HOME_URL='https://tadika-app.github.io/home';
+const IMG='https://lh3.googleusercontent.com/d/';
+
+const TH_M=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_S=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_D=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const $=s=>document.querySelector(s);
+const thN=s=>String(s).replace(/\d/g,d=>'๐๑๒๓๔๕๖๗๘๙'[d]);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let TOKEN=null, USER=null, MEALS=[], OTP_EMAIL='', RESET_TOKEN='', fTimer=null, lastChk='';
+let EDIT_ID=null, CUR={file:null,existing:null}; // CUR = รูปที่เลือกใหม่ / รูปเดิมที่มีอยู่
+
+/* ---------- วันที่ ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const localStr=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayStr=()=>localStr(new Date());
+const dowOf=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(Date.UTC(y,m-1,d)).getUTCDay()};
+const isWE=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&[0,6].includes(dowOf(s));
+function lastWeekend(){const d=new Date();while(![0,6].includes(d.getDay()))d.setDate(d.getDate()-1);return localStr(d)}
+function fmtShort(d){const [y,m,dd]=d.split('-').map(Number);return thN(dd)+' '+TH_S[m-1]+' '+thN(y+543)}
+
+/* ---------- หลอดสถานะ + เรียก API ---------- */
+function bar(p,t){$('#bar').classList.remove('hidden');$('#barFill').style.width=p+'%';$('#barText').textContent=t||''}
+function barHide(){setTimeout(()=>$('#bar').classList.add('hidden'),500)}
+async function task(txt,fn){
+  let p=8;bar(p,txt);
+  const iv=setInterval(()=>{p+=(90-p)*.12;bar(p,txt)},300);
+  try{return await fn()}finally{clearInterval(iv);bar(100,'เสร็จสิ้น');barHide()}
+}
+// เรียก Apps Script Web App (text/plain เพื่อไม่ให้เกิด CORS preflight)
+async function run(fn,...a){
+  let res;
+  try{res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args:a})})}
+  catch(e){throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่')}
+  let j;try{j=await res.json()}catch(e){throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง ตรวจสอบการ Deploy Web App (ให้สิทธิ์ Anyone)')}
+  if(j.error)throw new Error(j.error);
+  return j.data;
+}
+function fail(e){
+  const m=(e&&e.message)||String(e);
+  if(m.includes('SESSION')){logout(true);return}
+  Swal.fire({icon:'error',title:'เกิดข้อผิดพลาด',text:m,confirmButtonColor:'#176452'});
+}
+async function api(fn,txt,...a){try{return await task(txt,()=>run(fn,...a))}catch(e){fail(e);return null}}
+const apiA=(fn,txt,...a)=>api(fn,txt,TOKEN,...a);
+const warn=(t,m)=>Swal.fire({icon:'warning',title:t,text:m,confirmButtonColor:'#176452'});
+const ok=(t,m)=>Swal.fire({icon:'success',title:t,text:m,confirmButtonColor:'#176452',timer:2200,timerProgressBar:true});
+
+/* ---------- ป็อปอัพเงื่อนไขข้อตกลงและนโยบาย (แสดงทุกครั้งที่เปิด) ---------- */
+function showTerms(){
+  try{if(localStorage.getItem('terms_hide')===todayStr())return}catch(e){}
+  Swal.fire({
+    title:'<i class="fa-solid fa-file-contract" style="color:#176452"></i> เงื่อนไขข้อตกลงและนโยบายการใช้งาน',
+    html:`<div style="text-align:left;font-size:14.5px;line-height:1.6">
+      <p style="margin-bottom:8px">โปรดอ่านก่อนใช้งานระบบบันทึกและรายงานผลการจัดการอาหารกลางวัน ตาดีกา</p>
+      <ul style="padding-left:18px;list-style:disc">
+        <li>ระบบใช้บันทึกรายการอาหารกลางวันและจัดทำรายงานของศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) เท่านั้น</li>
+        <li>บันทึกได้เฉพาะวันเสาร์และวันอาทิตย์ อัพโหลดรูปได้วันละ 1 รูป</li>
+        <li>ผู้ใช้ต้องรักษาข้อมูลเข้าสู่ระบบของตนเอง และรับผิดชอบความถูกต้องของข้อมูลที่บันทึก</li>
+        <li>ระบบเก็บข้อมูลที่ท่านลงทะเบียนและข้อมูลที่บันทึก เพื่อการใช้งานระบบเท่านั้น ไม่เปิดเผยแก่บุคคลภายนอก</li>
+        <li>รูปภาพจะถูกลบอัตโนมัติเมื่อครบ 100 วัน ควรเก็บสำเนารายงานไว้เอง</li>
+        <li>ห้ามอัพโหลดรูปที่ไม่เหมาะสมหรือละเมิดสิทธิ์ผู้อื่น</li>
+      </ul></div>`,
+    width:560,
+    showCloseButton:true,
+    allowOutsideClick:false,
+    confirmButtonText:'<i class="fa-solid fa-book-open"></i> อ่านเพิ่มเติม',
+    confirmButtonColor:'#176452',
+    showDenyButton:true,
+    denyButtonText:'<i class="fa-regular fa-eye-slash"></i> ไม่ต้องแสดงอีกวันนี้',
+    denyButtonColor:'#94a3b8',
+    preConfirm:()=>{window.open(HOME_URL,'_blank','noopener');return false} // เปิดลิงก์ แล้วคงป็อปอัพไว้
+  }).then(r=>{
+    if(r.isDenied){try{localStorage.setItem('terms_hide',todayStr())}catch(e){}}
+  });
+}
+
+/* ---------- สลับหน้า ---------- */
+function show(group,id){
+  document.querySelectorAll('#'+group+' > .v').forEach(e=>e.classList.add('hidden'));
+  $('#'+id).classList.remove('hidden');window.scrollTo(0,0);
+}
+function go(id,keep){
+  show('main',id);
+  document.querySelectorAll('.nav[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
+  if(id==='vDash')loadDash();
+  if(id==='vSet')fillSettings();
+  if(id==='vAdd'&&!keep)resetForm();
+}
+
+/* ---------- เข้าสู่ระบบ (จำการล็อกอินด้วย localStorage) ---------- */
+async function doLogin(){
+  const u=$('#l_user').value.trim(),p=$('#l_pass').value;
+  if(!u||!p)return warn('กรอกข้อมูลไม่ครบ','กรุณากรอกอีเมลและรหัสผ่าน');
+  const r=await api('login','กำลังเข้าสู่ระบบ...',u,p);
+  if(!r)return;
+  if(!r.ok)return Swal.fire({icon:'error',title:'เข้าสู่ระบบไม่สำเร็จ',text:r.msg,confirmButtonColor:'#176452'});
+  TOKEN=r.token;USER=r.user;
+  try{localStorage.setItem('tk',TOKEN)}catch(e){}
+  $('#l_pass').value='';enterApp();
+}
+function enterApp(){
+  $('#auth').classList.add('hidden');$('#app').classList.remove('hidden');
+  fillHeader();buildMonths();go('vDash');
+}
+function fillHeader(){$('#hCenter').textContent='ตาดีกา '+USER.center;$('#hUser').textContent=USER.name+' · '+USER.position}
+function logout(silent){
+  TOKEN=null;USER=null;try{localStorage.removeItem('tk')}catch(e){}
+  $('#app').classList.add('hidden');$('#auth').classList.remove('hidden');show('authBox','vLogin');
+  if(silent===true)warn('หมดเวลาการใช้งาน','กรุณาเข้าสู่ระบบอีกครั้ง');
+}
+(async function init(){
+  showTerms();
+  let t=null;try{t=localStorage.getItem('tk')}catch(e){}
+  if(!t)return;
+  TOKEN=t;
+  try{
+    const r=await task('กำลังตรวจสอบการเข้าสู่ระบบ...',()=>run('me',t));
+    if(r&&r.ok){USER=r.user;TOKEN=r.token||t;try{localStorage.setItem('tk',TOKEN)}catch(e){}enterApp()}
+  }catch(e){
+    const m=(e&&e.message)||'';
+    if(m.includes('SESSION')){TOKEN=null;try{localStorage.removeItem('tk')}catch(x){}}
+    else{TOKEN=null;fail(e)} // เครือข่ายขัดข้อง: เก็บโทเค็นไว้ ไม่ลบทิ้ง
+  }
+})();
+
+/* ---------- ลงทะเบียน ---------- */
+async function checkEmail(){
+  const e=$('#r_email').value.trim().toLowerCase();
+  if(!e||e===lastChk)return;lastChk=e;
+  const r=await api('checkEmail','กำลังตรวจสอบอีเมล...',e);
+  if(!r)return;
+  if(!r.ok){$('#pwBox').classList.add('hidden');return warn('อีเมลไม่ถูกต้อง',r.msg)}
+  if(r.exists){
+    $('#pwBox').classList.add('hidden');
+    const c=await Swal.fire({icon:'question',title:'ใช้บัญชีนี้ไปแล้ว',text:'กู้คืนบัญชีของคุณหรือไม่?',showCancelButton:true,confirmButtonText:'ใช่',cancelButtonText:'ไม่ใช่',confirmButtonColor:'#176452'});
+    lastChk='';
+    if(c.isConfirmed){$('#f_email').value=e;goForgot(e)}else{$('#r_email').value=''}
+  }else $('#pwBox').classList.remove('hidden');
+}
+async function doRegister(){
+  const v=k=>$('#r_'+k).value.trim();
+  const d={name:v('name'),position:v('pos'),center:v('center'),address:v('addr'),district:v('dist'),province:v('prov'),phone:v('phone'),email:v('email'),password:$('#r_pw').value};
+  if(Object.values(d).slice(0,8).some(x=>!x))return warn('กรอกข้อมูลไม่ครบ','กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วน');
+  if($('#pwBox').classList.contains('hidden'))return checkEmail();
+  if(d.password.length<6)return warn('รหัสผ่านสั้นเกินไป','ต้องมีอย่างน้อย 6 ตัวอักษร');
+  if(d.password!==$('#r_pw2').value)return warn('รหัสผ่านไม่ตรงกัน','กรุณายืนยันรหัสผ่านให้ตรงกัน');
+  const r=await api('register','กำลังบันทึกการสมัคร...',d);
+  if(!r)return;
+  if(!r.ok){
+    if(r.exists){lastChk='';return checkEmail()}
+    return warn('สมัครไม่สำเร็จ',r.msg);
+  }
+  await Swal.fire({icon:'success',title:'ลงทะเบียนสำเร็จ',text:'เข้าสู่ระบบด้วยอีเมลและรหัสผ่านที่ตั้งไว้',confirmButtonColor:'#176452'});
+  $('#l_user').value=d.email;$('#l_pass').value='';show('authBox','vLogin');
+  document.querySelectorAll('#vReg input').forEach(i=>i.value='');$('#pwBox').classList.add('hidden');lastChk='';
+}
+
+/* ---------- ลืมรหัสผ่าน ---------- */
+function goForgot(email){
+  if(typeof email==='string')$('#f_email').value=email;else if($('#l_user').value)$('#f_email').value=$('#l_user').value;
+  ['fs2','fs3'].forEach(i=>$('#'+i).classList.add('hidden'));$('#fs1').classList.remove('hidden');
+  show('authBox','vForgot');
+}
+async function sendOtp(){
+  const e=$('#f_email').value.trim().toLowerCase()||OTP_EMAIL;
+  if(!e)return warn('กรุณากรอกอีเมล','');
+  const r=await api('sendOtp','กำลังส่งรหัส OTP...',e);
+  if(!r)return;
+  if(!r.ok)return warn('ส่งรหัสไม่สำเร็จ',r.msg);
+  OTP_EMAIL=e;$('#f_mail').textContent=e;$('#fs1').classList.add('hidden');$('#fs2').classList.remove('hidden');$('#f_otp').value='';$('#f_otp').focus();
+  startTimer();ok('ส่งรหัสแล้ว','ตรวจสอบรหัส 4 หลักในอีเมลของคุณ');
+}
+function startTimer(){
+  clearInterval(fTimer);const end=Date.now()+30*60e3;
+  fTimer=setInterval(()=>{
+    const s=Math.max(0,Math.round((end-Date.now())/1000));
+    $('#f_timer').textContent=pad(Math.floor(s/60))+':'+pad(s%60);
+    if(!s)clearInterval(fTimer);
+  },1000);
+}
+async function verifyOtp(){
+  const o=$('#f_otp').value.trim();
+  if(!/^\d{4}$/.test(o))return warn('รหัสไม่ครบ','กรอกรหัส OTP 4 หลัก');
+  const r=await api('verifyOtp','กำลังตรวจสอบรหัส...',OTP_EMAIL,o);
+  if(!r)return;
+  if(!r.ok)return warn('ยืนยันไม่สำเร็จ',r.msg);
+  RESET_TOKEN=r.resetToken;clearInterval(fTimer);
+  $('#fs2').classList.add('hidden');$('#fs3').classList.remove('hidden');
+  ok('ยืนยันตัวตนสำเร็จ','กำหนดรหัสผ่านใหม่ได้เลย');
+}
+async function resetPw(){
+  const p=$('#f_pw').value;
+  if(p.length<6)return warn('รหัสผ่านสั้นเกินไป','ต้องมีอย่างน้อย 6 ตัวอักษร');
+  if(p!==$('#f_pw2').value)return warn('รหัสผ่านไม่ตรงกัน','');
+  const r=await api('resetPassword','กำลังบันทึกรหัสผ่านใหม่...',OTP_EMAIL,RESET_TOKEN,p);
+  if(!r)return;
+  if(!r.ok)return warn('ไม่สำเร็จ',r.msg);
+  await Swal.fire({icon:'success',title:'เปลี่ยนรหัสผ่านสำเร็จ',text:'เข้าสู่ระบบด้วยรหัสผ่านใหม่',confirmButtonColor:'#176452'});
+  $('#l_user').value=OTP_EMAIL;$('#f_pw').value=$('#f_pw2').value='';RESET_TOKEN='';show('authBox','vLogin');
+}
+
+/* ---------- แดชบอร์ด ---------- */
+function buildMonths(){
+  const n=new Date(),sel=$('#monthSel');sel.innerHTML='';
+  for(let i=0;i<4;i++){ // เดือนล่าสุด + ย้อนหลัง 3 เดือน
+    const d=new Date(n.getFullYear(),n.getMonth()-i,1);
+    const v=d.getFullYear()+'-'+pad(d.getMonth()+1);
+    sel.add(new Option(TH_M[d.getMonth()]+' '+(d.getFullYear()+543)+(i?'':' (ล่าสุด)'),v));
+  }
+}
+async function loadDash(){
+  const r=await apiA('getMonth','กำลังโหลดข้อมูล...',$('#monthSel').value);
+  if(!r)return;MEALS=r.meals;
+  $('#stDays').textContent=MEALS.length;
+  $('#stImgs').textContent=MEALS.reduce((a,m)=>a+m.images.length,0);
+  $('#stLast').textContent=MEALS.length?fmtShort(MEALS[MEALS.length-1].date):'-';
+  $('#list').innerHTML=MEALS.length?MEALS.map(card).join(''):'<div class="card sm:col-span-2 text-center text-slate-500"><i class="fa-regular fa-folder-open text-2xl mb-2 block"></i>ยังไม่มีการบันทึกในเดือนนี้ — กดเมนู “บันทึกอาหาร” เพื่อเริ่มต้น</div>';
+}
+function card(m){
+  const img=m.images[0]?`<img src="${IMG+m.images[0]}" loading="lazy" class="w-full max-h-56 object-cover rounded-lg bg-slate-100 mt-2" onerror="this.style.display='none'">`:'';
+  return `<div class="card !p-4"><div class="flex justify-between items-start gap-2">
+    <div class="font-semibold text-pine-700"><i class="fa-regular fa-calendar-check mr-1"></i>วัน${TH_D[dowOf(m.date)]}ที่ ${fmtShort(m.date)}</div>
+    <div class="flex gap-3 text-sm shrink-0">
+      <button class="text-pine-600" onclick="editMeal('${m.id}')"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+      <button class="text-red-600" onclick="delMeal('${m.id}')"><i class="fa-solid fa-trash-can"></i> ลบ</button>
+    </div></div>
+    <ul class="text-sm my-2 list-disc pl-5">${m.menu.split('\n').filter(Boolean).map(l=>'<li>'+esc(l)+'</li>').join('')}</ul>
+    ${m.note?'<div class="text-xs text-slate-500"><i class="fa-regular fa-comment-dots"></i> หมายเหตุ: '+esc(m.note)+'</div>':''}
+    ${img}</div>`;
+}
+async function delMeal(id){
+  const c=await Swal.fire({icon:'warning',title:'ลบรายการนี้?',text:'รูปภาพของรายการนี้จะถูกลบออกด้วย',showCancelButton:true,confirmButtonText:'ลบ',cancelButtonText:'ยกเลิก',confirmButtonColor:'#dc2626'});
+  if(!c.isConfirmed)return;
+  if(await apiA('deleteMeal','กำลังลบรายการและรูปภาพ...',id)){ok('ลบแล้ว');loadDash()}
+}
+
+/* ---------- ฟอร์มบันทึก / แก้ไข + อัพโหลดรูป (1 รูป) ---------- */
+function resetForm(){
+  EDIT_ID=null;CUR={file:null,existing:null};
+  $('#a_date').value=lastWeekend();$('#a_date').disabled=false;
+  $('#a_menu').value='';$('#a_note').value='';
+  $('#a_title').innerHTML='<i class="fa-solid fa-utensils mr-1"></i> บันทึกรายการอาหารกลางวัน';
+  $('#a_cancel').classList.add('hidden');
+  onDate($('#a_date'),true);renderPrev();
+}
+function editMeal(id){
+  const m=MEALS.find(x=>x.id===id);if(!m)return;
+  go('vAdd',true);
+  EDIT_ID=id;CUR={file:null,existing:m.images[0]||null};
+  $('#a_date').value=m.date;$('#a_date').disabled=true; // วันที่ล็อกไว้ขณะแก้ไข
+  $('#a_menu').value=m.menu;$('#a_note').value=m.note||'';
+  $('#a_title').innerHTML='<i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไขรายการอาหารกลางวัน';
+  $('#a_cancel').classList.remove('hidden');
+  onDate($('#a_date'),true);renderPrev();
+}
+function onDate(el,quiet){
+  if(el.value&&!isWE(el.value)){
+    if(!quiet)warn('เลือกได้เฉพาะวันเสาร์-อาทิตย์','ระบบบันทึกได้เฉพาะวันเสาร์และวันอาทิตย์เท่านั้น');
+    el.value=lastWeekend();
+  }
+  $('#a_day').textContent=el.value?'(วัน'+TH_D[dowOf(el.value)]+')':'';
+}
+function compress(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{
+      const s=Math.min(1,1280/Math.max(img.width,img.height)),c=document.createElement('canvas');
+      c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+      res(c.toDataURL('image/jpeg',.8));
+    };
+    img.onerror=()=>rej(new Error('อ่านไฟล์รูปไม่ได้'));img.src=u;
+  });
+}
+async function pickFile(inp){
+  const f=inp.files[0];inp.value='';
+  if(!f)return;
+  try{CUR.file={name:f.name.replace(/\.\w+$/,'')+'.jpg',data:await compress(f)}}catch(e){fail(e)}
+  renderPrev();
+}
+function renderPrev(){
+  const src=CUR.file?CUR.file.data:(CUR.existing?IMG+CUR.existing:'');
+  $('#a_pickTxt').textContent=src?'เปลี่ยนรูปภาพ':'เลือกรูปภาพ / ถ่ายรูป';
+  $('#a_prev').innerHTML=src?`<div class="relative inline-block w-full"><img src="${src}" class="w-full max-h-64 object-cover rounded-lg bg-slate-100">
+    <button class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8" title="ลบรูป" onclick="CUR={file:null,existing:null};renderPrev()"><i class="fa-solid fa-xmark"></i></button>
+    ${CUR.file&&CUR.existing?'<div class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> รูปเดิมจะถูกลบเมื่อบันทึก</div>':''}</div>`:'';
+}
+async function saveMeal(){
+  const date=$('#a_date').value,menu=$('#a_menu').value.trim();
+  if(!date||!menu)return warn('กรอกข้อมูลไม่ครบ','กรุณาระบุวันที่และรายการอาหาร');
+  if(!isWE(date))return warn('เลือกได้เฉพาะวันเสาร์-อาทิตย์','ระบบบันทึกได้เฉพาะวันเสาร์และวันอาทิตย์เท่านั้น');
+  if(!EDIT_ID&&MEALS.some(m=>m.date===date)){
+    const c=await Swal.fire({icon:'question',title:'มีข้อมูลวันนี้แล้ว',text:'ต้องการแทนที่รายการเดิม (และรูปเดิม) หรือไม่?',showCancelButton:true,confirmButtonText:'แทนที่',cancelButtonText:'ยกเลิก',confirmButtonColor:'#176452'});
+    if(!c.isConfirmed)return;
+  }
+  $('#a_save').disabled=true;
+  let newId=null;
+  try{
+    if(CUR.file){
+      bar(25,'กำลังอัพโหลดรูป...');
+      const r=await run('uploadImage',TOKEN,CUR.file.name,'image/jpeg',CUR.file.data.split(',')[1]);
+      newId=r.id;
+    }
+    const images=newId?[newId]:(CUR.existing?[CUR.existing]:[]);
+    bar(80,'กำลังบันทึกข้อมูล...');
+    const r=await run('saveMeal',TOKEN,{date,menu,note:$('#a_note').value,images});
+    bar(100,'เสร็จสิ้น');barHide();
+    if(!r.ok){
+      if(newId)run('discardImage',TOKEN,newId).catch(()=>{});
+      return warn('บันทึกไม่สำเร็จ',r.msg);
+    }
+    await Swal.fire({icon:'success',title:EDIT_ID?'แก้ไขสำเร็จ':'บันทึกสำเร็จ',text:newId?'อัพโหลดรูปเรียบร้อย':'',confirmButtonColor:'#176452'});
+    const ym=date.slice(0,7),opt=[...$('#monthSel').options].find(o=>o.value===ym);
+    if(opt)$('#monthSel').value=ym;
+    resetForm();go('vDash');
+  }catch(e){
+    barHide();
+    if(newId)run('discardImage',TOKEN,newId).catch(()=>{});
+    fail(e);
+  }finally{$('#a_save').disabled=false}
+}
+
+/* ---------- ตั้งค่า ---------- */
+function fillSettings(){
+  const m={prep:'preparer',preppos:'preparerPos',appr:'approver',fy:'fiscalYear',center:'center',addr:'address',dist:'district',prov:'province'};
+  Object.keys(m).forEach(k=>$('#s_'+k).value=USER[m[k]]||'');
+}
+async function saveSettings(){
+  const g=k=>$('#s_'+k).value.trim();
+  const r=await apiA('saveSettings','กำลังบันทึกการตั้งค่า...',{preparer:g('prep'),preparerPos:g('preppos'),approver:g('appr'),fiscalYear:g('fy'),center:g('center'),address:g('addr'),district:g('dist'),province:g('prov')});
+  if(!r)return;
+  if(!r.ok)return warn('บันทึกไม่สำเร็จ',r.msg);
+  USER=r.user;fillHeader();ok('บันทึกการตั้งค่าแล้ว');
+}
+
+/* ---------- พิมพ์รายงาน A4 แนวตั้ง ---------- */
+function printReport(){
+  if(!MEALS.length)return Swal.fire({icon:'info',title:'ไม่มีข้อมูล',text:'เดือนนี้ยังไม่มีการบันทึก',confirmButtonColor:'#176452'});
+  const [y,mo]=$('#monthSel').value.split('-').map(Number),be=y+543;
+  const fy=USER.fiscalYear||(mo>=9?be+1:be);
+  const rows=MEALS.map(m=>{
+    const [yy,mm,dd]=m.date.split('-').map(Number);
+    const imgs=m.images.map(id=>`<img src="${IMG+id}" class="s">`).join('');
+    return `<tr><td class="c">${thN(dd)} ${TH_S[mm-1]} ${thN(yy+543)}</td>
+      <td>${m.menu.split('\n').filter(Boolean).map(l=>'-'+esc(l)).join('<br>')}</td>
+      <td class="c">${imgs}</td><td>${esc(m.note)}</td></tr>`;
+  }).join('');
+  const dots=(n)=>'.'.repeat(n);
+  const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>รายงานอาหารกลางวัน ${TH_M[mo-1]} ${be}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+  @page{size:A4 portrait;margin:14mm 12mm}
+  *{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;font-size:14pt;line-height:1.35;margin:0;color:#000}
+  h1,h2,p{margin:0;text-align:center}.t{font-weight:700;font-size:15pt}
+  table{width:100%;border-collapse:collapse;margin-top:10px}
+  th,td{border:1px solid #000;padding:4px 6px;vertical-align:top;font-size:13pt}
+  th{text-align:center;font-weight:600}tr{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}
+  td.c{text-align:center}td:nth-child(1){width:17%}td:nth-child(2){width:29%}td:nth-child(3){width:42%}td:nth-child(4){width:12%}
+  img.s{width:100%;max-height:62mm;object-fit:contain}
+  .sig{display:flex;justify-content:space-between;margin-top:22px;break-inside:avoid;font-size:13pt}
+  .sig div{width:48%;text-align:center}.pb{margin-top:14px;break-inside:avoid}
+  </style></head><body>
+  <p class="t">แบบสรุปรายงานผลการจัดการอาหารกลางวันของผู้เรียนศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา)</p>
+  <p class="t">ประจำปีงบประมาณ พ.ศ. ${thN(fy)} ประจำเดือน${TH_M[mo-1]} ${thN(be)}</p>
+  <p class="t">ศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)} อำเภอ${esc(USER.district)} จังหวัด${esc(USER.province)}</p>
+  <p class="t">ที่ตั้ง ${esc(USER.address)}</p>
+  <div style="margin-top:12px">- รายละเอียดการจัดอาหารกลางวัน</div>
+  <table><thead><tr><th>วัน/เดือน/ปี</th><th>รายการอาหาร</th><th>รูปถ่าย</th><th>หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="pb">ปัญหา/ข้อเสนอแนะ${dots(95)}<br>${dots(120)}</div>
+  <div class="sig">
+    <div>ลงชื่อ ${dots(32)} ผู้จัดทำข้อมูล<br>(${USER.preparer?esc(USER.preparer):dots(40)})<br>ตำแหน่ง ${USER.preparerPos?esc(USER.preparerPos):dots(30)}</div>
+    <div>ลงชื่อ ${dots(32)} ผู้รับรองข้อมูล<br>(${USER.approver?esc(USER.approver):dots(40)})<br>ตำแหน่ง ประธานศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)}</div>
+  </div>
+  <script>
+  window.onload=function(){
+    var im=[].slice.call(document.images),n=im.length,d=0;
+    function f(){if(++d>=n)setTimeout(function(){window.print()},400)}
+    if(!n)return f();
+    im.forEach(function(i){if(i.complete)f();else{i.onload=f;i.onerror=f}});
+  };
+  <\/script></body></html>`;
+  const w=window.open('','_blank');
+  if(!w)return warn('เบราว์เซอร์บล็อกหน้าต่างใหม่','กรุณาอนุญาต Pop-up สำหรับเว็บนี้ แล้วกดพิมพ์อีกครั้ง');
+  w.document.open();w.document.write(html);w.document.close();
+}
+</script>
+</body>
+</html>
