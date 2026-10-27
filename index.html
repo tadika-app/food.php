@@ -167,8 +167,8 @@
       <div class="card max-w-2xl mx-auto">
         <h2 class="text-lg font-bold text-pine-700 mb-1" id="a_title"><i class="fa-solid fa-utensils mr-1"></i> บันทึกรายการอาหารกลางวัน</h2>
         <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-circle-info"></i> บันทึกได้เฉพาะวันเสาร์และวันอาทิตย์ · อัพโหลดรูปได้วันละ 1 รูป</p>
-        <label class="lbl"><i class="fa-regular fa-calendar-days mr-1 text-pine-500"></i>วัน/เดือน/ปี <b id="a_day" class="text-pine-600"></b></label>
-        <input id="a_date" type="date" class="inp mb-3" onchange="onDate(this)">
+        <label class="lbl"><i class="fa-regular fa-calendar-days mr-1 text-pine-500"></i>วัน/เดือน/ปี (เลือกได้เฉพาะวันเสาร์-อาทิตย์ แสดงเป็นปี พ.ศ.)</label>
+        <select id="a_date" class="inp mb-3"></select>
         <label class="lbl"><i class="fa-solid fa-bowl-food mr-1 text-pine-500"></i>รายการอาหาร (พิมพ์บรรทัดละ 1 รายการ)</label>
         <textarea id="a_menu" rows="4" class="inp mb-3" placeholder="ข้าวสวย&#10;ไข่เจียว+ซอสมะเขือเทศ&#10;ส้ม+แตงกวา"></textarea>
         <label class="lbl"><i class="fa-regular fa-comment-dots mr-1 text-pine-500"></i>หมายเหตุ (ถ้ามี)</label>
@@ -480,28 +480,40 @@ async function delMeal(id){
 /* ---------- ฟอร์มบันทึก / แก้ไข + อัพโหลดรูป (1 รูป) ---------- */
 function resetForm(){
   EDIT_ID=null;CUR={file:null,existing:null};
-  $('#a_date').value=lastWeekend();$('#a_date').disabled=false;
+  buildDateOptions(lastWeekend());$('#a_date').disabled=false;
   $('#a_menu').value='';$('#a_note').value='';
   $('#a_title').innerHTML='<i class="fa-solid fa-utensils mr-1"></i> บันทึกรายการอาหารกลางวัน';
   $('#a_cancel').classList.add('hidden');
-  onDate($('#a_date'),true);renderPrev();
+  renderPrev();
 }
 function editMeal(id){
   const m=MEALS.find(x=>x.id===id);if(!m)return;
   go('vAdd',true);
   EDIT_ID=id;CUR={file:null,existing:m.images[0]||null};
-  $('#a_date').value=m.date;$('#a_date').disabled=true; // วันที่ล็อกไว้ขณะแก้ไข
+  buildDateOptions(m.date);$('#a_date').disabled=true; // วันที่ล็อกไว้ขณะแก้ไข
   $('#a_menu').value=m.menu;$('#a_note').value=m.note||'';
   $('#a_title').innerHTML='<i class="fa-solid fa-pen-to-square mr-1"></i> แก้ไขรายการอาหารกลางวัน';
   $('#a_cancel').classList.remove('hidden');
-  onDate($('#a_date'),true);renderPrev();
+  renderPrev();
 }
-function onDate(el,quiet){
-  if(el.value&&!isWE(el.value)){
-    if(!quiet)warn('เลือกได้เฉพาะวันเสาร์-อาทิตย์','ระบบบันทึกได้เฉพาะวันเสาร์และวันอาทิตย์เท่านั้น');
-    el.value=lastWeekend();
-  }
-  $('#a_day').textContent=el.value?'(วัน'+TH_D[dowOf(el.value)]+')':'';
+/* ---------- รายการวันที่ให้เลือก (เฉพาะวันเสาร์-อาทิตย์ แสดงผลเป็น พ.ศ.) ---------- */
+function weekendDates(pastWeeks,futureWeeks){
+  const list=[],d=new Date();d.setHours(0,0,0,0);
+  const start=new Date(d);start.setDate(start.getDate()-pastWeeks*7);
+  const end=new Date(d);end.setDate(end.getDate()+futureWeeks*7);
+  for(let c=new Date(start);c<=end;c.setDate(c.getDate()+1)) if([0,6].includes(c.getDay())) list.push(localStr(c));
+  return list;
+}
+function dateLabel(s){
+  const [y,m,dd]=s.split('-').map(Number);
+  return 'วัน'+TH_D[dowOf(s)]+'ที่ '+thN(dd)+' '+TH_M[m-1]+' พ.ศ. '+thN(y+543);
+}
+function buildDateOptions(selected){
+  const dates=weekendDates(15,8); // ย้อนหลัง ~15 สัปดาห์ (ตามอายุเก็บรูป 100 วัน) + ล่วงหน้า 8 สัปดาห์
+  if(selected&&!dates.includes(selected))dates.push(selected); // กันกรณีแก้ไขรายการเก่านอกช่วง
+  dates.sort((a,b)=>b.localeCompare(a)); // ใหม่สุดอยู่บนสุด
+  $('#a_date').innerHTML=dates.map(d=>`<option value="${d}">${dateLabel(d)}</option>`).join('');
+  $('#a_date').value=selected||lastWeekend();
 }
 function compress(file){
   return new Promise((res,rej)=>{
