@@ -604,6 +604,7 @@ function printReport(){
   const dots=(n)=>'.'.repeat(n);
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>รายงานอาหารกลางวัน ${TH_M[mo-1]} ${be}</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
   @page{size:A4 portrait;margin:14mm 12mm}
   *{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;font-size:14pt;line-height:1.35;margin:0;color:#000}
@@ -614,7 +615,12 @@ function printReport(){
   td.c{text-align:center}td:nth-child(1){width:17%}td:nth-child(2){width:29%}td:nth-child(3){width:42%}td:nth-child(4){width:12%}
   img.s{width:100%;max-height:62mm;object-fit:contain}
   .sig{display:flex;justify-content:space-between;margin-top:22px;break-inside:avoid;font-size:13pt}
-  .sig div{width:48%;text-align:center}.pb{margin-top:14px;break-inside:avoid}
+  .sig div{width:48%;text-align:center}
+  .pb{margin-top:14px;break-inside:avoid}
+  .pb .sline{border-bottom:1px solid #000;height:22px;margin-top:8px}
+  .qrbox{text-align:center;margin-top:18px;break-inside:avoid}
+  .qrbox #qr{width:92px;height:92px;margin:0 auto;position:relative}
+  .qrbox .qrcap{font-size:9pt;margin-top:4px;line-height:1.3;color:#000}
   </style></head><body>
   <p class="t">แบบสรุปรายงานผลการจัดการอาหารกลางวันของผู้เรียนศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา)</p>
   <p class="t">ประจำปีงบประมาณ พ.ศ. ${thN(fy)} ประจำเดือน${TH_M[mo-1]} ${thN(be)}</p>
@@ -622,11 +628,29 @@ function printReport(){
   <p class="t">ที่ตั้ง ${esc(USER.address)}</p>
   <div style="margin-top:12px">- รายละเอียดการจัดอาหารกลางวัน</div>
   <table><thead><tr><th>วัน/เดือน/ปี</th><th>รายการอาหาร</th><th>รูปถ่าย</th><th>หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="pb">ปัญหา/ข้อเสนอแนะ${dots(95)}<br>${dots(120)}</div>
+  <div class="pb">ปัญหา/ข้อเสนอแนะ
+    <div class="sline"></div>
+    <div class="sline"></div>
+    <div class="sline"></div>
+  </div>
   <div class="sig">
     <div>ลงชื่อ ${dots(32)} ผู้จัดทำข้อมูล<br>(${USER.preparer?esc(USER.preparer):dots(40)})<br>ตำแหน่ง ${USER.preparerPos?esc(USER.preparerPos):dots(30)}</div>
     <div>ลงชื่อ ${dots(32)} ผู้รับรองข้อมูล<br>(${USER.approver?esc(USER.approver):dots(40)})<br>ตำแหน่ง ประธานศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)}</div>
   </div>
+  <div class="qrbox">
+    <div id="qr"></div>
+    <div class="qrcap">สแกน QR เพื่อใช้งานระบบนี้ฟรี<br>tadika-app.github.io/home</div>
+  </div>
+  <script>
+  try{
+    new QRCode(document.getElementById('qr'),{text:'https://tadika-app.github.io/home/',width:92,height:92,correctLevel:QRCode.CorrectLevel.H});
+    var qrBox=document.getElementById('qr'),logo=document.createElement('img');
+    logo.src='https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t';
+    logo.referrerPolicy='no-referrer';
+    logo.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;background:#fff;border-radius:5px;padding:2px;object-fit:contain';
+    qrBox.appendChild(logo);
+  }catch(e){}
+  <\/script>
   <script>
   window.onload=function(){
     var im=[].slice.call(document.images),n=im.length,d=0;
@@ -636,7 +660,11 @@ function printReport(){
     im.forEach(function(i){
       var k=0;
       i.onload=f;
-      i.onerror=function(){var l=L(i.getAttribute('data-id'));if(++k<l.length)i.src=l[k];else f()};
+      i.onerror=function(){
+        var id=i.getAttribute('data-id');
+        if(id){var l=L(id);if(++k<l.length){i.src=l[k];return}}
+        f();
+      };
       if(i.complete){if(i.naturalWidth)f();else i.onerror()}
     });
   };
