@@ -627,6 +627,18 @@ function printReport(){
     <div>ลงชื่อ ${dots(32)} ผู้จัดทำข้อมูล<br>(${USER.preparer?esc(USER.preparer):dots(40)})<br>ตำแหน่ง ${USER.preparerPos?esc(USER.preparerPos):dots(30)}</div>
     <div>ลงชื่อ ${dots(32)} ผู้รับรองข้อมูล<br>(${USER.approver?esc(USER.approver):dots(40)})<br>ตำแหน่ง ประธานศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)}</div>
   </div>
+  <div class="print-promo">
+    <div class="promo-box">
+      <div class="promo-qr">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://tadika-app.github.io/home" alt="QR Code">
+        <img src="https://lh3.googleusercontent.com/d/1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t" class="promo-logo" alt="Logo">
+      </div>
+      <div class="promo-text">
+        <b>สนับสนุนระบบบริหารจัดการตาดีกาฟรี!</b><br>
+        สแกน QR Code เพื่อใช้งานระบบบันทึกอาหารกลางวัน<br>และเครื่องมืออื่นๆ สำหรับศูนย์ตาดีกาได้ฟรี ไม่มีค่าใช้จ่าย
+      </div>
+    </div>
+  </div>
   <script>
   window.onload=function(){
     var im=[].slice.call(document.images),n=im.length,d=0;
