@@ -10,6 +10,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Sarabun','sans-serif']},colors:{pine:{50:'#eef6f3',100:'#d5e9e2',500:'#1f7a65',600:'#176452',700:'#0f4e40',900:'#0a2f27'},gold:'#c9a227'}}}}</script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style type="text/tailwindcss">
   body{font-family:'Sarabun',sans-serif;background:#f1f5f3;color:#1e2b27}
   .swal2-popup{font-family:'Sarabun',sans-serif}
@@ -218,6 +219,8 @@
 /* ===== ตั้งค่า: วาง URL ของ Web App ที่ Deploy จาก Apps Script (ลงท้ายด้วย /exec) ===== */
 const API_URL='https://script.google.com/macros/s/AKfycbz-yGwxJ7FAO2PUCxrlVdIQE_IEiwDvKo8Zy8MVfRvjwrVPdkw3IlCLOA7XtIB9_y5xdw/exec';
 const HOME_URL='https://tadika-app.github.io/home';
+const QR_URL='https://tadika-app.github.io/home/';
+const LOGO_ID='1dvwSIDiWfjlhtIs4WBblSAIBCQWwxp7t';
 const IMG='https://lh3.googleusercontent.com/d/';
 // ลองลิงก์รูปตามลำดับ ถ้าลิงก์แรกโหลดไม่ได้จะสลับไปลิงก์สำรองอัตโนมัติ
 const imgList=id=>[IMG+id,'https://drive.google.com/thumbnail?id='+id+'&sz=w1200','https://drive.google.com/uc?export=view&id='+id];
@@ -589,6 +592,16 @@ async function saveSettings(){
   USER=r.user;fillHeader();ok('บันทึกการตั้งค่าแล้ว');
 }
 
+/* ---------- สร้าง QR Code เป็น SVG (ระดับแก้ไขข้อผิดพลาด H เพื่อรองรับโลโก้กลาง) ---------- */
+function qrSvg(text){
+  try{
+    const q=qrcode(0,'H');q.addData(text,'Byte');q.make();
+    const n=q.getModuleCount(),m=2;let p='';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))p+='M'+(c+m)+' '+(r+m)+'h1v1h-1z';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n+m*2} ${n+m*2}" shape-rendering="crispEdges" style="display:block;width:100%;height:100%"><rect width="100%" height="100%" fill="#fff"/><path d="${p}" fill="#000"/></svg>`;
+  }catch(e){return ''}
+}
+
 /* ---------- พิมพ์รายงาน A4 แนวตั้ง ---------- */
 function printReport(){
   if(!MEALS.length)return Swal.fire({icon:'info',title:'ไม่มีข้อมูล',text:'เดือนนี้ยังไม่มีการบันทึก',confirmButtonColor:'#176452'});
@@ -602,19 +615,41 @@ function printReport(){
       <td class="c">${imgs}</td><td>${esc(m.note)}</td></tr>`;
   }).join('');
   const dots=(n)=>'.'.repeat(n);
+  const qr=qrSvg(QR_URL);
+  const qrBlock=qr?`<div class="ad">
+    <div class="qrw">${qr}<div class="qrl"><img class="lg" src="${IMG+LOGO_ID}" data-id="${LOGO_ID}" referrerpolicy="no-referrer" alt=""></div></div>
+    <div class="adt">
+      <div class="adh">ใช้ระบบฟรี ไม่มีค่าใช้จ่าย!</div>
+      <div>ระบบบันทึกและรายงานผลการจัดการอาหารกลางวัน ตาดีกา</div>
+      <div>สแกน QR Code เพื่อเริ่มใช้งานและดูระบบงานอื่นๆ</div>
+      <div class="adu">tadika-app.github.io/home</div>
+    </div></div>`:'';
   const html=`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>รายงานอาหารกลางวัน ${TH_M[mo-1]} ${be}</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
   @page{size:A4 portrait;margin:14mm 12mm}
-  *{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;font-size:14pt;line-height:1.35;margin:0;color:#000}
+  *{box-sizing:border-box}body{font-family:'Sarabun',sans-serif;font-size:14pt;line-height:1.35;margin:0;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   h1,h2,p{margin:0;text-align:center}.t{font-weight:700;font-size:15pt}
   table{width:100%;border-collapse:collapse;margin-top:10px}
   th,td{border:1px solid #000;padding:4px 6px;vertical-align:top;font-size:13pt}
   th{text-align:center;font-weight:600}tr{break-inside:avoid;page-break-inside:avoid}thead{display:table-header-group}
   td.c{text-align:center}td:nth-child(1){width:17%}td:nth-child(2){width:29%}td:nth-child(3){width:42%}td:nth-child(4){width:12%}
   img.s{width:100%;max-height:62mm;object-fit:contain}
+  .pb{margin-top:14px;break-inside:avoid}
+  /* เส้นจุดไข่ปลาเต็มความกว้างหน้ากระดาษพอดี ไม่ว่าจะปรับขนาดตัวอักษรเท่าใด */
+  .ln{display:flex;align-items:flex-end;width:100%;margin-top:8px;min-height:1.5em}
+  .ln:first-child{margin-top:0}
+  .ln .lt{white-space:nowrap;flex:none}
+  .ln .df{flex:1 1 auto;min-width:0;height:1.25em;margin-left:6px;border-bottom:2px dotted #000}
   .sig{display:flex;justify-content:space-between;margin-top:22px;break-inside:avoid;font-size:13pt}
-  .sig div{width:48%;text-align:center}.pb{margin-top:14px;break-inside:avoid}
+  .sig div{width:48%;text-align:center}
+  .ad{display:flex;align-items:center;gap:14px;margin-top:18px;padding:10px 14px;border:1.5px dashed #176452;border-radius:10px;break-inside:avoid;font-size:12pt;line-height:1.4}
+  .qrw{position:relative;width:30mm;height:30mm;flex:none}
+  .qrl{position:absolute;left:50%;top:50%;width:22%;height:22%;transform:translate(-50%,-50%);background:#fff;border-radius:6px;padding:1.2mm;display:flex;align-items:center;justify-content:center}
+  .qrl img{width:100%;height:100%;object-fit:contain}
+  .adt{flex:1;text-align:left}
+  .adh{font-weight:700;font-size:15pt;color:#176452}
+  .adu{font-weight:600;color:#176452}
   </style></head><body>
   <p class="t">แบบสรุปรายงานผลการจัดการอาหารกลางวันของผู้เรียนศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา)</p>
   <p class="t">ประจำปีงบประมาณ พ.ศ. ${thN(fy)} ประจำเดือน${TH_M[mo-1]} ${thN(be)}</p>
@@ -622,11 +657,16 @@ function printReport(){
   <p class="t">ที่ตั้ง ${esc(USER.address)}</p>
   <div style="margin-top:12px">- รายละเอียดการจัดอาหารกลางวัน</div>
   <table><thead><tr><th>วัน/เดือน/ปี</th><th>รายการอาหาร</th><th>รูปถ่าย</th><th>หมายเหตุ</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="pb">ปัญหา/ข้อเสนอแนะ${dots(150)}<br>${dots(180)}</div>
+  <div class="pb">
+    <div class="ln"><span class="lt">ปัญหา/ข้อเสนอแนะ</span><span class="df"></span></div>
+    <div class="ln"><span class="df" style="margin-left:0"></span></div>
+    <div class="ln"><span class="df" style="margin-left:0"></span></div>
+  </div>
   <div class="sig">
     <div>ลงชื่อ ${dots(32)} ผู้จัดทำข้อมูล<br>(${USER.preparer?esc(USER.preparer):dots(40)})<br>ตำแหน่ง ${USER.preparerPos?esc(USER.preparerPos):dots(30)}</div>
     <div>ลงชื่อ ${dots(32)} ผู้รับรองข้อมูล<br>(${USER.approver?esc(USER.approver):dots(40)})<br>ตำแหน่ง ประธานศูนย์การศึกษาอิสลามประจำมัสยิด (ตาดีกา) ${esc(USER.center)}</div>
   </div>
+  ${qrBlock}
   <script>
   window.onload=function(){
     var im=[].slice.call(document.images),n=im.length,d=0;
@@ -636,7 +676,7 @@ function printReport(){
     im.forEach(function(i){
       var k=0;
       i.onload=f;
-      i.onerror=function(){var l=L(i.getAttribute('data-id'));if(++k<l.length)i.src=l[k];else f()};
+      i.onerror=function(){var l=L(i.getAttribute('data-id'));if(++k<l.length)i.src=l[k];else{if(i.className==='lg')i.parentNode.style.display='none';f()}};
       if(i.complete){if(i.naturalWidth)f();else i.onerror()}
     });
   };
