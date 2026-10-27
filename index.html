@@ -590,6 +590,7 @@ async function saveSettings(){
 }
 
 /* ---------- พิมพ์รายงาน A4 แนวตั้ง ---------- */
+/* ---------- พิมพ์รายงาน A4 แนวตั้ง ---------- */
 function printReport(){
   if(!MEALS.length)return Swal.fire({icon:'info',title:'ไม่มีข้อมูล',text:'เดือนนี้ยังไม่มีการบันทึก',confirmButtonColor:'#176452'});
   const [y,mo]=$('#monthSel').value.split('-').map(Number),be=y+543;
